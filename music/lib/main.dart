@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:music/music.dart';
+import 'package:audioplayer2/audioplayer2.dart';
 
 void main() => runApp(MyApp());
 
@@ -29,23 +32,28 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
 
   List<Music> playlist = [
-    new Music('Slow Down', 'Ema area', 'assets/img/un.jpg', 'https://www.bensound.com/royalty-free-music?download=summer'),
-    new Music('Slow Down', 'Ema area', 'assets/img/deux.jpg', 'https://www.bensound.com/royalty-free-music?download=summer'),
+    new Music('Dreams', 'Dreams Team', 'assets/img/un.jpg', 'https://www.bensound.com/royalty-free-music?download=dreams'),
+    new Music('Endless Motion', 'Ema area', 'assets/img/deux.jpg', 'https://www.bensound.com/royalty-free-music?download=endlessmotion'),
   ];
 
   Music playlistNow;
-  double position = 0.0;
+  Duration position = new Duration(seconds: 0);
+  AudioPlayer audioPlayer;
+  StreamSubscription positionSub;
+  StreamSubscription stateSubscription;
+  Duration duree = new Duration(seconds: 10);
+  PlayerState statut = PlayerState.stopped;
+  int index = 0;
 
   @override
   void initState() {
     super.initState();
-    playlistNow = playlist[0];
+    playlistNow = playlist[index];
+    configAudioPlayer();
   }
 
   @override
   Widget build(BuildContext context) {
-
-    print(playlistNow.imagePath);
 
     return Scaffold(
       appBar: AppBar(
@@ -71,27 +79,30 @@ class _MyHomePageState extends State<MyHomePage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 buttonStyleWidget(Icons.fast_rewind, 30.0, ActionMusic.rewind),
-                buttonStyleWidget(Icons.play_arrow, 45.0, ActionMusic.play),
+                buttonStyleWidget(
+                  (statut == PlayerState.playing) ? Icons.pause : Icons.play_arrow , 100.0
+                  , (statut == PlayerState.playing) ? ActionMusic.pause : ActionMusic.play 
+                  ),
                 buttonStyleWidget(Icons.fast_forward, 30.0, ActionMusic.forward),
               ],
             ),
             new Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: <Widget>[
-                textStyleWidget('0:0', 0.8),
+                textStyleWidget(fromDuration(position), 0.8),
                 new Slider(
-                  value: position,
+                  value: position.inSeconds.toDouble(),
                   min: 0.0,
                   max: 30.0,
                   inactiveColor: Colors.grey,
                   activeColor: Colors.orangeAccent,
                   onChanged: (double d) {
                     setState(() {
-                      position : d;
+                      audioPlayer.seek(d);
                     });
                   },
                 ),
-                textStyleWidget('0:23', 0.8),
+                textStyleWidget(fromDuration(duree), 0.8),
               ],
             ),
             
@@ -109,16 +120,16 @@ class _MyHomePageState extends State<MyHomePage> {
       onPressed: () {
         switch (action) {
           case ActionMusic.play:
-            print('play');
+            play();
             break;
           case ActionMusic.pause:
-            print('pause');
+            pause();
             break;
           case ActionMusic.rewind:
-            print('rewind');
+            rewind();
             break;
           case ActionMusic.forward:
-            print('forward');
+            forward();
             break;  
         }
       },
@@ -137,6 +148,82 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
+
+  void configAudioPlayer() {
+    audioPlayer = new AudioPlayer();
+    positionSub = audioPlayer.onAudioPositionChanged.listen(
+      (pos) => setState(() => position = pos)
+    );
+    stateSubscription = audioPlayer.onPlayerStateChanged.listen(
+      (state) {
+        if (state == AudioPlayerState.PLAYING) {
+          setState(() {
+            duree = audioPlayer.duration;
+          });
+        } else if (state == AudioPlayerState.STOPPED) {
+          setState(() {
+            statut = PlayerState.stopped;
+          });
+        }
+      },
+      onError: (error) {
+        print('Error: $error');
+        setState(() {
+            statut = PlayerState.stopped;
+            duree = new Duration(seconds: 0);
+            position = new Duration(seconds: 0);
+        });
+      }
+    );
+  }
+
+  String fromDuration(Duration duree) {
+    print(duree);
+    return duree.toString().split('.').first;
+  }
+
+  Future play() async {
+    await audioPlayer.play(playlistNow.urlSong);
+    setState(() {
+      statut = PlayerState.playing;
+    });
+  }
+
+  Future pause() async {
+    await audioPlayer.pause();
+    setState(() {
+      statut = PlayerState.paused;
+    });
+  }
+
+  void forward() {
+    if (index == playlist.length - 1) {
+      index = 0;
+    } else {
+      index++;
+    }
+    playlistNow = playlist[index];
+    audioPlayer.stop();
+    configAudioPlayer();
+    play();
+  }
+
+  void rewind() {
+    if (position > Duration(seconds: 3)) {
+      audioPlayer.seek(0.0);
+    } else {
+      if (index == 0) {
+        index = playlist.length - 1;
+      } else {
+        index--;
+      }
+      playlistNow = playlist[index];
+      audioPlayer.stop();
+      configAudioPlayer();
+      play();
+    }
+  }
+
 }
 
 enum ActionMusic {
@@ -144,4 +231,10 @@ enum ActionMusic {
   pause,
   rewind,
   forward
+}
+
+enum PlayerState {
+  playing,
+  stopped,
+  paused
 }
