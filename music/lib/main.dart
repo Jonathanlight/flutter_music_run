@@ -34,6 +34,7 @@ class _MyHomePageState extends State<MyHomePage> {
   ];
 
   Music playlistNow;
+  double position = 0.0;
 
   @override
   void initState() {
@@ -78,9 +79,22 @@ class _MyHomePageState extends State<MyHomePage> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: <Widget>[
                 textStyleWidget('0:0', 0.8),
+                new Slider(
+                  value: position,
+                  min: 0.0,
+                  max: 30.0,
+                  inactiveColor: Colors.grey,
+                  activeColor: Colors.orangeAccent,
+                  onChanged: (double d) {
+                    setState(() {
+                      position : d;
+                    });
+                  },
+                ),
                 textStyleWidget('0:23', 0.8),
               ],
-            )
+            ),
+            
           ],
         ),
       ), // This trailing comma makes auto-formatting nicer for build methods.
