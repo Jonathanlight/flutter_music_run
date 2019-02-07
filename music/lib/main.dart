@@ -63,50 +63,90 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       backgroundColor: Colors.black,
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: <Widget>[
-            new Card(
-              elevation: 9.0,
-              child: Container(
-                width: MediaQuery.of(context).size.width / 2.5,
-                child: new Image.asset(playlistNow.imagePath),
-              ),
-            ),
-            textStyleWidget(playlistNow.title, 1.5),
-            textStyleWidget(playlistNow.artiste, 1.0),
-            new Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                buttonStyleWidget(Icons.fast_rewind, 30.0, ActionMusic.rewind),
-                buttonStyleWidget(
-                  (statut == PlayerState.playing) ? Icons.pause : Icons.play_arrow , 100.0
-                  , (statut == PlayerState.playing) ? ActionMusic.pause : ActionMusic.play 
+        child: new Container(
+          margin: const EdgeInsets.all(15.0),
+          padding: const EdgeInsets.all(3.0),
+          decoration: new BoxDecoration(
+            gradient: LinearGradient(
+                    colors: [
+                      Colors.deepOrangeAccent,
+                      Colors.deepPurple,
+                    ],
+                    begin: FractionalOffset(1.2, 0.4),
+                    end: FractionalOffset(-0.3, 0.8),
+                    stops: [0.0, 1.0],
                   ),
-                buttonStyleWidget(Icons.fast_forward, 30.0, ActionMusic.forward),
-              ],
+            border: new Border.all(
+              color: Colors.deepOrange,
+              style: BorderStyle.solid
             ),
-            new Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: <Widget>[
-                textStyleWidget(fromDuration(position), 0.8),
-                new Slider(
-                  value: position.inSeconds.toDouble(),
-                  min: 0.0,
-                  max: 30.0,
-                  inactiveColor: Colors.grey,
-                  activeColor: Colors.orangeAccent,
-                  onChanged: (double d) {
-                    setState(() {
-                      audioPlayer.seek(d);
-                    });
-                  },
+            boxShadow: <BoxShadow>[
+              BoxShadow(
+                color: Colors.orange,
+                offset: Offset(1.0, 0.9),
+                blurRadius: 20.0,
+              ),
+            ],
+            shape: BoxShape.circle,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              new Card(
+                elevation: 9.0,
+                color: Colors.orange,
+                child: Container(
+                  decoration: new BoxDecoration(
+                    shape: BoxShape.circle,
+                  ),
+                  width: MediaQuery.of(context).size.width / 2.5,
+                  child: CircleAvatar(
+                    radius: 100.0,
+                    child: Image.asset(
+                      playlistNow.imagePath,
+                    ),
+                  ),
                 ),
-                textStyleWidget(fromDuration(duree), 0.8),
-              ],
-            ),
-            
-          ],
+              ),
+              new Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: <Widget>[
+                  textStyleWidget(playlistNow.title, 1.5),
+                textStyleWidget(playlistNow.artiste, 1.0),
+                ],
+              ),
+              new Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  buttonStyleWidget(Icons.fast_rewind, 30.0, ActionMusic.rewind),
+                  buttonStyleWidget(
+                    (statut == PlayerState.playing) ? Icons.pause : Icons.play_arrow , 100.0
+                    , (statut == PlayerState.playing) ? ActionMusic.pause : ActionMusic.play 
+                    ),
+                  buttonStyleWidget(Icons.fast_forward, 30.0, ActionMusic.forward),
+                ],
+              ),
+              new Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: <Widget>[
+                  textStyleWidget(fromDuration(position), 0.8),
+                  new Slider(
+                    value: position?.inMilliseconds?.toDouble() ?? 0.0,
+                    min: 0.0,
+                    max: duree.inMilliseconds.toDouble(),
+                    inactiveColor: Colors.grey,
+                    activeColor: Colors.orangeAccent,
+                    onChanged: (double d) {
+                      setState(() {
+                        audioPlayer.seek((d / 1000).roundToDouble());
+                      });
+                  }),
+                  textStyleWidget(fromDuration(duree), 0.8),
+                ],
+              ),
+              
+            ],
+          ),
         ),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
@@ -115,7 +155,7 @@ class _MyHomePageState extends State<MyHomePage> {
   IconButton buttonStyleWidget(IconData icone, double size, ActionMusic action) {
     return new IconButton(
       icon: new Icon(icone),
-      color: Colors.grey,
+      color: Colors.black,
       iconSize: size,
       onPressed: () {
         switch (action) {
@@ -178,7 +218,6 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   String fromDuration(Duration duree) {
-    print(duree);
     return duree.toString().split('.').first;
   }
 
