@@ -35,4 +35,5 @@ flutter:
   assets:
     - assets/img/un.jpg
     - assets/img/deux.jpg
+    - assets/img/background.jpg
   
